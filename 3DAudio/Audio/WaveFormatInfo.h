@@ -55,4 +55,9 @@ struct WaveFormatInfo
             Format = (BitsPerSample == 16) ? AudioSampleFormat::Int16 : AudioSampleFormat::Int32;
         }
     }
+    
+    void Update()
+    {
+        BytesPerFrame = Channels* BitsPerSample / 8;
+    }
 };

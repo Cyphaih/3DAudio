@@ -50,8 +50,7 @@ public:
     
     HRESULT InitializeAudioInput(
         ComPtr<IAudioClient>& audioClient,
-        ComPtr<IAudioCaptureClient>& captureClient,
-        WAVEFORMATEX** waveFormat);
+        ComPtr<IAudioCaptureClient>& captureClient);
     
     void StoreWaveFormatInfo();
     

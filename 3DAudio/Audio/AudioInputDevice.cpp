@@ -1,11 +1,14 @@
 #include "AudioInputDevice.h"
 #include "AudioSetup.h"
 
-#include "RingBuffer.h"
+#include "../RingBuffer.h"
 #include <mmdeviceapi.h>
 #include <Audioclient.h>
+#include <iostream>
+#include <ostream>
 
-
+#include "WaveFormatInfo.h"
+#include  "AudioHelperFunctions.h"
 
 void AudioInputDevice::InputThread(RingBuffer<float>& InputRingBuffer)
 {
@@ -17,8 +20,8 @@ void AudioInputDevice::InputThread(RingBuffer<float>& InputRingBuffer)
     
     ComPtr<IAudioClient> Client;
     ComPtr<IAudioCaptureClient> CaptureClient;
-    WAVEFORMATEX* waveFormat = nullptr;
-    HRESULT hr = InitializeAudioInput(Client,CaptureClient,&waveFormat);
+    
+    HRESULT hr = InitializeAudioInput(Client,CaptureClient);
     if (SUCCEEDED(hr))
     {
         hr = Client->Start();
@@ -48,7 +51,7 @@ void AudioInputDevice::InputThread(RingBuffer<float>& InputRingBuffer)
                             if (Data != nullptr)
                             {
                                 float* FloatSamples = reinterpret_cast<float*>(Data);
-                                UINT32 TotalSamples = FramesAvailable * waveFormat->nChannels;
+                                UINT32 TotalSamples = FramesAvailable * wFormatInfo.Channels;
                                 InputRingBuffer.Write(FloatSamples, TotalSamples);
                             
                             }
@@ -65,7 +68,6 @@ void AudioInputDevice::InputThread(RingBuffer<float>& InputRingBuffer)
         Client->Stop();
     }
     
-    CoTaskMemFree(waveFormat);
 }
 
 AudioInputDevice::AudioInputDevice()= default;
@@ -120,7 +122,7 @@ void AudioInputDevice::SetupInput(const std::wstring& NewDeviceId)
 
 
 HRESULT AudioInputDevice::InitializeAudioInput(ComPtr<IAudioClient>& audioClient,
-                                               ComPtr<IAudioCaptureClient>& captureClient, WAVEFORMATEX** waveFormat)
+                                               ComPtr<IAudioCaptureClient>& captureClient)
 {
     ComPtr<IMMDeviceEnumerator> enumerator;
     HRESULT hr = CoCreateInstance(
@@ -135,21 +137,31 @@ HRESULT AudioInputDevice::InitializeAudioInput(ComPtr<IAudioClient>& audioClient
     hr = Device->Activate(__uuidof(IAudioClient), CLSCTX_ALL, nullptr, &audioClient);
     if (FAILED(hr)) return hr;
 
-    hr = audioClient->GetMixFormat(waveFormat);
-    if (FAILED(hr)) return hr;
-
+    if (!wFormatInfo.IsSetup)return S_FALSE;
     REFERENCE_TIME bufferDuration = 300000; // 1 second in 100-ns units
+    
+    
+    
+    WAVEFORMATEXTENSIBLE RequestedFormat = BuildWaveFormat(wFormatInfo);
+  
+    
+    
     hr = audioClient->Initialize(
         AUDCLNT_SHAREMODE_SHARED,
-        0,
+        AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM | AUDCLNT_STREAMFLAGS_SRC_DEFAULT_QUALITY,
         bufferDuration,
         0,
-        *waveFormat,
+        reinterpret_cast<const WAVEFORMATEX*>(&RequestedFormat),
         nullptr);
-    if (FAILED(hr)) return hr;
+    if (FAILED(hr))
+    {
+        
+        std::cout << " Failed to Initialize MONO Waveformat" << std::endl;
+        return hr;
+    }
 
+    
     hr = audioClient->GetService(__uuidof(IAudioCaptureClient), &captureClient);
-    if (FAILED(hr)) CoTaskMemFree(*waveFormat);
     return hr;
 }
 
@@ -173,5 +185,11 @@ void AudioInputDevice::StoreWaveFormatInfo()
     WAVEFORMATEX* waveFormat;
     hr = audioClient->GetMixFormat(&waveFormat);
     if (FAILED(hr)) return;
+    
     wFormatInfo = WaveFormatInfo(waveFormat);
+    wFormatInfo.Channels = 1;
+    
+    wFormatInfo.Update();
+    
+    CoTaskMemFree(waveFormat);
 }

@@ -32,6 +32,8 @@ public:
     void StopRendering();
     
     void StoreWaveFormatInfo(const WaveFormatInfo* info);
+    void SetStereo();
+    
     
     WaveFormatInfo wInfo;
 };

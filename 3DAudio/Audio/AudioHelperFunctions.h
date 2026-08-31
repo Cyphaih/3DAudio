@@ -3,6 +3,7 @@
 #include <string>
 #include <wrl/client.h>
 #include "WaveFormatInfo.h"
+#include  <iostream>
 
 inline std::wstring GetDeviceIDSafely(const Microsoft::WRL::ComPtr<IMMDevice>& Device)
 {

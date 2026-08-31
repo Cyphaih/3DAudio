@@ -8,8 +8,8 @@
 #include <wrl/client.h>
 
 #include "AudioSetup.h"
-#include "HelperFunctions.h"
-#include "RingBuffer.h"
+#include "AudioHelperFunctions.h"
+#include "../RingBuffer.h"
 
 AudioRenderer::AudioRenderer()
 {
@@ -62,7 +62,7 @@ HRESULT AudioRenderer::InitRender(ComPtr<IAudioClient>& AudioClient, ComPtr<IAud
     std::cout << "Got Device" << '\n';
     
     hr = Device->Activate(__uuidof(IAudioClient),CLSCTX_ALL,nullptr,&AudioClient);
-    if (FAILED(hr)) return hr;
+    if (FAILED(hr)) {return hr;}
     
     std::cout << "Activated Device" << '\n';
     
@@ -168,6 +168,7 @@ void AudioRenderer::StopRendering()
 
 void AudioRenderer::StoreWaveFormatInfo(const WaveFormatInfo* info)
 {
+    if (IsRunning.load())return;
     if (info)
     {
         wInfo = *info;
@@ -192,4 +193,11 @@ void AudioRenderer::StoreWaveFormatInfo(const WaveFormatInfo* info)
     hr = audioClient->GetMixFormat(&waveFormat);
     if (FAILED(hr)) return;
     wInfo = WaveFormatInfo(waveFormat);
+}
+
+void AudioRenderer::SetStereo()
+{
+    if (IsRunning.load())return;
+    wInfo.Channels = 2;
+    wInfo.Update();
 }
