@@ -15,6 +15,8 @@ Optimizations:
 The threads are currently working on Sleep timers instead of events from COM 
 Audio can not catch up when behind for any reason
 AudioEngine contains Buffers and Variables that I want to move elsewehere later.
+
+No clean Exit for the programm right now.
 -----
 Planned next steps:
 

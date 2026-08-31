@@ -13,7 +13,7 @@ void AudioProcessor::ProcessThread()
     float TempArray[BufferSize];
     float StereoOutputArray[BufferSize * 2];
     size_t SampleAmount; 
-    size_t writeHead = 0;
+    size_t WriteHead = 0;
     
     
     // MyVector SoundOrigin{1,2,3}; <- some custom vector for later implementation tests 
@@ -29,16 +29,16 @@ void AudioProcessor::ProcessThread()
         for (size_t i=0;i<ReadAmount;i++)
         {
             float currentSample = TempArray[i];
-            HistoryBuffer[writeHead] = currentSample;
+            HistoryBuffer[WriteHead] = currentSample;
         
             float leftSample = currentSample;
-            size_t readPos = (writeHead + BufferSize - DelayFrames) % BufferSize;
+            size_t readPos = (WriteHead + BufferSize - DelayFrames) % BufferSize;
             float rightSample = HistoryBuffer[readPos];
         
             StereoOutputArray[i*2 + 0] = leftSample;
             StereoOutputArray[i*2 + 1] = rightSample;
             SampleAmount += 2; // 
-            writeHead = (writeHead + 1) % BufferSize;
+            WriteHead = (WriteHead + 1) % BufferSize;
         }
         OutputRingBuffer->Write(StereoOutputArray,SampleAmount);
         
