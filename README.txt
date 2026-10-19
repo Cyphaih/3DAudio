@@ -1,6 +1,8 @@
 This is just a small project I am making out of interest in 3D Audio and in learning some new programming skills.
 
 I am using Windows COM for the audio 
+
+//Currently on hold as I am looking into Gameengine development and might want to use a similar approach here
 -----
 For now I have implemented the following:
 
